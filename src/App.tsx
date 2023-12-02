@@ -8,7 +8,10 @@ function App() {
   const [endText, setendText] = useState("");
 
   const startGame = useCallback(() => {
+    // initialize with empty strings based on board size
     setboard(Array(boardSize ** 2).fill(""));
+
+    setcurrentPlayer("X");
     setendText("");
     setmoves(0);
   }, [boardSize]);
@@ -18,6 +21,7 @@ function App() {
   }, [boardSize, startGame]);
 
   useEffect(() => {
+    // handle when there's no move left
     if (moves === boardSize ** 2) {
       setendText(`IT'S A DRAW`);
     }
@@ -31,6 +35,7 @@ function App() {
   >([]);
 
   useEffect(() => {
+    // get all indexes need to be checked for a diagonal win condition
     const generateDiagonalIdx = () => {
       const topLeft = 0;
       const topRight = topLeft + boardSize - 1;
@@ -39,12 +44,17 @@ function App() {
       const rightIdx = [topRight];
 
       for (let i = 0; i < board.length; i++) {
+        // move down from left to right
         const leftNextIdx = leftIdx.at(-1)! + boardSize + 1;
+
+        // move down from right to left
         const rightNextIdx = rightIdx.at(-1)! + boardSize - 1;
 
+        // since looping the whole board length, only add when the idx is correct
         if (i === leftNextIdx) {
           leftIdx.push(leftNextIdx);
         }
+        // add a condition to prevent the last idx to be added
         if (i === rightNextIdx && i !== board.length - 1) {
           rightIdx.push(rightNextIdx);
         }
@@ -62,6 +72,7 @@ function App() {
   const getRow = (idx: number) => {
     const rowStartIdx = [0];
 
+    // add all possible start idx for a row according to board size
     for (let i = 0; i < boardSize; i++) {
       rowStartIdx.push(rowStartIdx.at(-1)! + boardSize);
     }
@@ -69,6 +80,7 @@ function App() {
     let row = 0;
 
     for (let i = 0; i < rowStartIdx.length; i++) {
+      // break since idx can't be higher than possible start idx
       if (idx < rowStartIdx[i]) break;
       row = i;
     }
@@ -77,6 +89,7 @@ function App() {
   };
 
   const getCol = (idx: number) => {
+    // col on the first row is same as idx, for the next rows just use modulo
     return idx < boardSize ? idx : idx % boardSize;
   };
 
@@ -87,6 +100,7 @@ function App() {
 
     if (!player.length) return false;
 
+    // loop as long as the current idx has the same player
     for (let i = startIdx + 1; i < startIdx + boardSize; i++) {
       if (player !== board[i]) return false;
       player = board[i];
@@ -100,6 +114,7 @@ function App() {
 
     if (!player.length) return false;
 
+    // loop to the next idx below on the board
     for (let i = col + boardSize; i < board.length; i += boardSize) {
       if (player !== board[i]) return false;
       player = board[i];
@@ -112,30 +127,36 @@ function App() {
     let win = false;
 
     leftCheck: if (diagonalLeftIdxToCheck.includes(idx)) {
-      let leftPlayer = board[0];
+      let player = board[0];
 
+      if (!player.length) break leftCheck;
+
+      // check all the diagonal left idx & break when current idx doesn't have the same player
       for (let i = 1; i < diagonalLeftIdxToCheck.length; i++) {
         const currentIdx = diagonalLeftIdxToCheck[i];
 
-        if (!leftPlayer || leftPlayer !== board[currentIdx]) {
+        if (player !== board[currentIdx]) {
           break leftCheck;
         }
-        leftPlayer = board[currentIdx];
+        player = board[currentIdx];
       }
 
       win = true;
     }
 
     rightCheck: if (win === false && diagonalRightIdxToCheck.includes(idx)) {
-      let rightPlayer = board[diagonalRightIdxToCheck[0]];
+      let player = board[diagonalRightIdxToCheck[0]];
 
+      if (!player.length) break rightCheck;
+
+      // check all the diagonal right idx & break when current idx doesn't have the same player
       for (let i = 1; i < diagonalRightIdxToCheck.length; i++) {
         const currentIdx = diagonalRightIdxToCheck[i];
 
-        if (!rightPlayer || rightPlayer !== board[currentIdx]) {
+        if (player !== board[currentIdx]) {
           break rightCheck;
         }
-        rightPlayer = board[currentIdx];
+        player = board[currentIdx];
       }
 
       win = true;
